@@ -126,10 +126,11 @@ def settle_integration_request(integration_request, action: str, payment_id: str
 
 
 def verify_payment_amount(pr_docname: str, payment_id: str) -> bool:
-	"""Whether the provider payment still matches the reference amount/currency.
+	"""Whether the provider payment ID, status, amount and currency match the reference.
 
 	Webhook event bodies do not carry amounts, so the payment object is fetched
-	from GoCardless before any settlement.
+	from GoCardless before any settlement. Only settled provider payments may
+	settle the linked Payment Request.
 	"""
 	from frappe.utils import cint
 
@@ -140,4 +141,9 @@ def verify_payment_amount(pr_docname: str, payment_id: str) -> bool:
 	settings = frappe.get_doc("GoCardless Settings", settings_name)
 	payment = settings.initialize_client().payments.get(payment_id)
 
-	return payment.amount == cint(pr.grand_total * 100) and payment.currency == pr.currency
+	return (
+		payment.id == payment_id
+		and payment.status in SETTLED_PAYMENT_ACTIONS
+		and payment.amount == cint(pr.grand_total * 100)
+		and payment.currency == pr.currency
+	)

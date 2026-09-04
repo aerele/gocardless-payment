@@ -31,24 +31,27 @@ def webhooks() -> int | None:
 
 	if not authenticate_signature(r):
 		raise frappe.AuthenticationError
+	settings = get_verified_webhook_settings(r)
+	if not settings:
+		raise frappe.AuthenticationError
 
 	gocardless_events = json.loads(r.get_data()) or []
 	for event in gocardless_events["events"]:
-		set_status(event)
+		set_status(event, settings)
 
 	return 200
 
 
-def set_status(event: dict) -> None:
+def set_status(event: dict, settings) -> None:
 	resource_type = event.get("resource_type", {})
 
 	if resource_type == "mandates":
-		set_mandate_status(event)
+		set_mandate_status(event, settings)
 	elif resource_type == "payments":
 		settlement.sync_payment_event(event)
 
 
-def set_mandate_status(event: dict) -> None:
+def set_mandate_status(event: dict, settings) -> None:
 	mandates = []
 	if isinstance(event["links"], list):
 		for link in event["links"]:
@@ -56,12 +59,9 @@ def set_mandate_status(event: dict) -> None:
 	else:
 		mandates.append(event["links"]["mandate"])
 
-	if event["action"] in CHARGEABLE_MANDATE_STATUSES:
-		disabled = 0
-	else:
-		disabled = 1
-
 	for mandate in mandates:
+		remote_mandate = settings.initialize_client().mandates.get(mandate)
+		disabled = 0 if remote_mandate.status in CHARGEABLE_MANDATE_STATUSES else 1
 		frappe.db.set_value("GoCardless Mandate", mandate, "disabled", disabled)
 
 
@@ -78,6 +78,26 @@ def authenticate_signature(r) -> bool:
 			return True
 
 	return False
+
+
+def get_verified_webhook_settings(r):
+	"""Return the Settings record whose secret verified this raw webhook request."""
+	received_signature = frappe.get_request_header(WEBHOOK_SIGNATURE_HEADER)
+	if not received_signature:
+		return None
+
+	for settings_name in frappe.get_all("GoCardless Settings", pluck="name"):
+		key = get_decrypted_password(
+			"GoCardless Settings", settings_name, fieldname="webhooks_secret", raise_exception=False
+		)
+		if not key:
+			continue
+
+		computed_signature = hmac.new(key.encode("utf-8"), r.get_data(), hashlib.sha256).hexdigest()
+		if hmac.compare_digest(str(received_signature), computed_signature):
+			return frappe.get_doc("GoCardless Settings", settings_name)
+
+	return None
 
 
 def get_webhook_keys() -> list[str]:

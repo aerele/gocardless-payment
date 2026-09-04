@@ -3,11 +3,13 @@
 
 """GoCardless-specific constants, preserved from the payments app migration."""
 
-# Supported transaction currencies (preserved from the payments app).
-# NOTE: this list predates the migration and must be re-verified against current
-# official GoCardless documentation before enabling new currencies.
-
-# Payment statuses treated as authorised-but-not-yet-settled at creation time.
+# Mandate statuses under which GoCardless accepts a charge against a mandate.
+CHARGEABLE_MANDATE_STATUSES = (
+	"pending_customer_approval",
+	"pending_submission",
+	"submitted",
+	"active",
+)
 
 # Payment statuses treated as cancelled at creation time.
 CANCELLED_PAYMENT_STATUSES = ("cancelled", "customer_approval_denied", "charged_back")

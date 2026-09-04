@@ -7,7 +7,7 @@ synchronisation, preserved from the payments app."""
 import hashlib
 import hmac
 import json
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
@@ -20,7 +20,7 @@ SECRET = "whsec_test_secret"
 
 def build_payload(mandate: str) -> bytes:
 	return json.dumps(
-		{"events": [{"resource_type": "mandates", "action": "active", "links": {"mandate": mandate}}]}
+		{"events": [{"resource_type": "mandates", "action": "created", "links": {"mandate": mandate}}]}
 	).encode()
 
 
@@ -78,6 +78,17 @@ class TestWebhooks(FrappeTestCase):
 		with patch("frappe.get_request_header", return_value=sign(payload, SECRET)):
 			self.assertTrue(webhook_module.authenticate_signature(FakeRequest(payload)))
 
+	def test_get_verified_webhook_settings_returns_matching_account(self):
+		second = make_settings()
+		second_secret = "whsec_second_account"
+		self.set_webhook_secret(second.name, second_secret)
+		payload = build_payload("MD00001")
+
+		with patch("frappe.get_request_header", return_value=sign(payload, second_secret)):
+			settings = webhook_module.get_verified_webhook_settings(FakeRequest(payload))
+
+		self.assertEqual(settings.name, second.name)
+
 	def make_mandate(self, mandate: str | None = None):
 		if mandate is None:
 			mandate = f"MD{frappe.generate_hash(length=10)}"
@@ -98,16 +109,21 @@ class TestWebhooks(FrappeTestCase):
 			}
 		).insert(ignore_permissions=True)
 
+	def settings_with_mandate_status(self, status: str):
+		settings = MagicMock()
+		settings.initialize_client.return_value.mandates.get.return_value.status = status
+		return settings
+
 	def test_mandate_event_toggles_disabled(self):
 		mandate = self.make_mandate()
 		mandate.db_set("disabled", 1)
 
-		event = {"resource_type": "mandates", "action": "active", "links": {"mandate": mandate.name}}
-		webhook_module.set_status(event)
+		event = {"resource_type": "mandates", "action": "created", "links": {"mandate": mandate.name}}
+		webhook_module.set_status(event, self.settings_with_mandate_status("active"))
 		self.assertEqual(frappe.db.get_value("GoCardless Mandate", mandate.name, "disabled"), 0)
 
 		event = {"resource_type": "mandates", "action": "cancelled", "links": {"mandate": mandate.name}}
-		webhook_module.set_status(event)
+		webhook_module.set_status(event, self.settings_with_mandate_status("cancelled"))
 		self.assertEqual(frappe.db.get_value("GoCardless Mandate", mandate.name, "disabled"), 1)
 
 	def test_mandate_event_with_links_list(self):
@@ -119,19 +135,19 @@ class TestWebhooks(FrappeTestCase):
 			"action": "cancelled",
 			"links": [{"mandate": first.name}, {"mandate": second.name}],
 		}
-		webhook_module.set_status(event)
+		webhook_module.set_status(event, self.settings_with_mandate_status("cancelled"))
 		self.assertEqual(frappe.db.get_value("GoCardless Mandate", first.name, "disabled"), 1)
 		self.assertEqual(frappe.db.get_value("GoCardless Mandate", second.name, "disabled"), 1)
 
 	def test_payment_events_dispatch_to_settlement(self):
 		event = {"id": "EVDISPATCH1", "resource_type": "payments", "action": "confirmed", "links": {"payment": "PM1"}}
 		with patch.object(webhook_module.settlement, "sync_payment_event") as sync:
-			webhook_module.set_status(event)
+			webhook_module.set_status(event, MagicMock())
 		sync.assert_called_once_with(event)
 
 	def test_unknown_resource_type_is_ignored(self):
 		# must not raise even though links are absent
-		webhook_module.set_status({"resource_type": "refunds", "action": "created"})
+		webhook_module.set_status({"resource_type": "refunds", "action": "created"}, MagicMock())
 
 	def test_webhooks_endpoint_verifies_signature(self):
 		self.set_webhook_secret(self.settings.name)
@@ -144,7 +160,14 @@ class TestWebhooks(FrappeTestCase):
 			with patch("frappe.get_request_header", return_value="invalid-signature"):
 				self.assertRaises(frappe.AuthenticationError, webhook_module.webhooks)
 
-			with patch("frappe.get_request_header", return_value=sign(payload, SECRET)):
+			with (
+				patch("frappe.get_request_header", return_value=sign(payload, SECRET)),
+				patch.object(
+					webhook_module,
+					"get_verified_webhook_settings",
+					return_value=self.settings_with_mandate_status("active"),
+				),
+			):
 				self.assertEqual(webhook_module.webhooks(), 200)
 
 			self.assertEqual(frappe.db.get_value("GoCardless Mandate", mandate.name, "disabled"), 0)
