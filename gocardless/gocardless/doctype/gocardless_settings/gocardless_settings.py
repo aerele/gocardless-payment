@@ -20,11 +20,8 @@ class GoCardlessSettings(GatewayControllerMixin, Document):
 
 	def initialize_client(self):
 		self.environment = self.get_environment()
-		try:
-			self.client = get_client(self.get_password("access_token"), self.environment)
-			return self.client
-		except Exception as e:
-			frappe.throw(e)
+		self.client = get_client(self.get_password("access_token"), self.environment)
+		return self.client
 
 	def on_update(self):
 		create_payment_gateway(
