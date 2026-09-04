@@ -1,1 +1,1 @@
-GoCardless Payment
+Gocardless

@@ -1,0 +1,97 @@
+{
+ "actions": [],
+ "autoname": "field:gateway_name",
+ "creation": "2026-08-24 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "gateway_name",
+  "credentials_section",
+  "access_token",
+  "webhooks_secret",
+  "environment_section",
+  "use_sandbox",
+  "webhook_section",
+  "webhook_endpoint"
+ ],
+ "fields": [
+  {
+   "fieldname": "gateway_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Payment Gateway Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "credentials_section",
+   "fieldtype": "Section Break",
+   "label": "Credentials"
+  },
+  {
+   "description": "GoCardless Dashboard \u2192 Settings \u2192 Developers \u2192 Access tokens. Sandbox and live tokens differ.",
+   "fieldname": "access_token",
+   "fieldtype": "Password",
+   "in_list_view": 1,
+   "label": "Access Token",
+   "reqd": 1
+  },
+  {
+   "description": "Signing secret of the webhook endpoint created in the GoCardless Dashboard (Settings \u2192 Developers \u2192 Webhooks). Differs between sandbox and live.",
+   "fieldname": "webhooks_secret",
+   "fieldtype": "Password",
+   "label": "Webhooks Secret"
+  },
+  {
+   "fieldname": "environment_section",
+   "fieldtype": "Section Break",
+   "label": "Environment"
+  },
+  {
+   "default": "0",
+   "description": "Use the GoCardless sandbox environment (api-sandbox.gocardless.com) instead of live.",
+   "fieldname": "use_sandbox",
+   "fieldtype": "Check",
+   "label": "Use Sandbox"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "webhook_section",
+   "fieldtype": "Section Break",
+   "label": "Webhook Endpoint"
+  },
+  {
+   "description": "Register this URL in the GoCardless Dashboard webhook settings. Generated automatically on save.",
+   "fieldname": "webhook_endpoint",
+   "fieldtype": "Data",
+   "label": "Webhook Endpoint",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-24 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Gocardless",
+ "name": "GoCardless Settings",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
