@@ -1,6 +1,8 @@
 # Copyright (c) Aerele and contributors
 # License: MIT. See license.txt
 
+from unittest.mock import patch
+
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
@@ -23,6 +25,22 @@ def make_settings(gateway_name: str | None = None, use_sandbox: bool = True) -> 
 
 
 class TestGoCardlessSettings(FrappeTestCase):
+	def test_webhook_endpoint_uses_configured_public_host_without_development_port(self):
+		settings = frappe.get_doc({"doctype": "GoCardless Settings"})
+
+		with patch.dict(
+			frappe.conf,
+			{
+				"host_name": "https://example.com",
+				"developer_mode": 1,
+				"webserver_port": 8001,
+			},
+		):
+			endpoint = settings.get_webhook_endpoint()
+
+		self.assertEqual(endpoint, "https://example.com/api/method/gocardless.gateway.webhooks.webhooks")
+		self.assertNotIn(":8001", endpoint)
+
 	def test_get_environment(self):
 		sandbox = frappe.get_doc({"doctype": "GoCardless Settings", "use_sandbox": 1})
 		live = frappe.get_doc({"doctype": "GoCardless Settings", "use_sandbox": 0})

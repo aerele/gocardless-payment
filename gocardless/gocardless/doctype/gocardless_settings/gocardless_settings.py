@@ -1,6 +1,8 @@
 # Copyright (c) Aerele and contributors
 # License: MIT. See license.txt
 
+from urllib.parse import urljoin
+
 import frappe
 from frappe.model.document import Document
 from frappe.utils import call_hook_method, get_url
@@ -16,7 +18,13 @@ WEBHOOK_ENDPOINT_PATH = "/api/method/gocardless.gateway.webhooks.webhooks"
 class GoCardlessSettings(GatewayControllerMixin, Document):
 	def validate(self):
 		self.initialize_client()
-		self.webhook_endpoint = get_url(WEBHOOK_ENDPOINT_PATH)
+		self.webhook_endpoint = self.get_webhook_endpoint()
+
+	def get_webhook_endpoint(self):
+		if host_name := frappe.conf.get("host_name"):
+			return urljoin(host_name.rstrip("/") + "/", WEBHOOK_ENDPOINT_PATH.lstrip("/"))
+
+		return get_url(WEBHOOK_ENDPOINT_PATH)
 
 	def initialize_client(self):
 		self.environment = self.get_environment()
