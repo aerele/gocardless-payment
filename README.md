@@ -31,3 +31,15 @@ Pre-commit is configured to use the following tools for checking and formatting 
 ### License
 
 mit
+
+
+<br>
+<br>
+<div align="center">
+  <a href="https://aerele.in">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="./gocardless/public/images/aerele-dark.png">
+      <img src="./gocardless/public/images/aerele.png" alt="Aerele Technologies" height="32"/>
+    </picture>
+  </a>
+</div>
