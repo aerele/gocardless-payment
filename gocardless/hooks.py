@@ -1,8 +1,8 @@
 app_name = "gocardless"
 app_title = "GoCardless Payment"
-app_publisher = "Aerele"
+app_publisher = "Aerele Technologies"
 app_description = "GoCardless payment gateway integration for Frappe and ERPNext, built on Payment Core"
-app_email = "hello@aerele.in"
+app_email = "integrations-support@aerele.in"
 app_license = "mit"
 
 # Apps

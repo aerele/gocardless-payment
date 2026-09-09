@@ -1,4 +1,4 @@
-# Copyright (c) Aerele and contributors
+# Copyright (c) Aerele Technologies and contributors
 # License: MIT. See license.txt
 
 """Isolated GoCardless SDK client construction, one client per settings record."""

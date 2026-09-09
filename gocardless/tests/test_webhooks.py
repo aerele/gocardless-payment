@@ -1,4 +1,4 @@
-# Copyright (c) Aerele and contributors
+# Copyright (c) Aerele Technologies and contributors
 # License: MIT. See license.txt
 
 """Webhook tests: signature verification (multi-account) and mandate status

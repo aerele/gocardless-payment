@@ -1,4 +1,4 @@
-# Copyright (c) Aerele and contributors
+# Copyright (c) Aerele Technologies and contributors
 # License: MIT. See license.txt
 
 """GoCardless-specific constants, preserved from the payments app migration."""

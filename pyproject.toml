@@ -1,7 +1,7 @@
 [project]
 name = "gocardless"
 authors = [
-    { name = "Aerele", email = "hello@aerele.in"}
+    { name = "Aerele Technologies", email = "integrations-support@aerele.in"}
 ]
 description = "GoCardless payment gateway integration for Frappe and ERPNext, built on Payment Core"
 requires-python = ">=3.14"
